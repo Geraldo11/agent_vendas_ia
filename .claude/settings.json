@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./terraform/terraform.tfstate)",
+      "Read(./terraform/terraform.tfstate.backup)",
+      "Read(./terraform/tfplan)"
+    ]
+  }
+}
