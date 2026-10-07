@@ -1,0 +1,183 @@
+[
+  {
+    "nome": "D3_moto",
+    "descricao": "Consórcio de MOTO excluído por CONS-01; o manual aceita moto",
+    "pergunta": "Por que a venda VD000369 não entrou na carteira do vendedor V0045?",
+    "entra_pelo_manual": true,
+    "divergencia": "D3",
+    "deve_citar": [
+      "CONS-01",
+      "moto"
+    ],
+    "deve_apontar_divergencia": true,
+    "id_venda": "VD000369",
+    "id_vendedor": "V0045"
+  },
+  {
+    "nome": "D1_arrependimento_8a10",
+    "descricao": "Consórcio cancelado entre 8 e 10 dias: o código deixa entrar, o manual (10 dias) excluiria",
+    "pergunta": "A venda VD000710 entrou na carteira do vendedor V0052. Ela deveria ter entrado, segundo as regras vigentes?",
+    "entra_pelo_manual": false,
+    "divergencia": "D1",
+    "deve_citar": [
+      "COM-03",
+      "10"
+    ],
+    "deve_apontar_divergencia": true,
+    "id_venda": "VD000710",
+    "id_vendedor": "V0052"
+  },
+  {
+    "nome": "D2_carencia_61a90",
+    "descricao": "Capitalização cancelada entre 61 e 90 dias: o código deixa entrar, o manual (90 dias) excluiria",
+    "pergunta": "A venda VD000087 entrou na carteira do vendedor V0025. Ela deveria ter entrado, segundo as regras vigentes?",
+    "entra_pelo_manual": false,
+    "divergencia": "D2",
+    "deve_citar": [
+      "CAP-03",
+      "90"
+    ],
+    "deve_apontar_divergencia": true,
+    "id_venda": "VD000087",
+    "id_vendedor": "V0025"
+  },
+  {
+    "nome": "D4_dia_do_desligamento",
+    "descricao": "Divergência LATENTE (nenhuma venda a prova): só aparece lendo código e manual",
+    "pergunta": "Um vendedor foi desligado em 10/03/2026 e fez uma venda nesse mesmo dia. Essa venda conta para a carteira dele?",
+    "entra_pelo_manual": true,
+    "divergencia": "D4",
+    "deve_citar": [
+      "COM-01"
+    ],
+    "deve_apontar_divergencia": true,
+    "id_venda": null,
+    "id_vendedor": null
+  },
+  {
+    "nome": "C_servicos",
+    "descricao": "Consórcio de serviços: excluído pelo código e pelo manual",
+    "pergunta": "Por que a venda VD000084 não entrou na carteira do vendedor V0006?",
+    "entra_pelo_manual": false,
+    "divergencia": null,
+    "deve_citar": [
+      "CONS-01"
+    ],
+    "deve_apontar_divergencia": false,
+    "id_venda": "VD000084",
+    "id_vendedor": "V0006"
+  },
+  {
+    "nome": "C_arrependimento_ate7",
+    "descricao": "Cancelamento em até 7 dias: excluído (COM-03) com 7 ou com 10 dias",
+    "pergunta": "Por que a venda VD000122 não entrou na carteira do vendedor V0004?",
+    "entra_pelo_manual": false,
+    "divergencia": null,
+    "deve_citar": [
+      "COM-03"
+    ],
+    "deve_apontar_divergencia": false,
+    "id_venda": "VD000122",
+    "id_vendedor": "V0004"
+  },
+  {
+    "nome": "C_carencia_8a60",
+    "descricao": "Capitalização cancelada na carência: excluída com 60 ou com 90 dias",
+    "pergunta": "Por que a venda VD000072 não entrou na carteira do vendedor V0040?",
+    "entra_pelo_manual": false,
+    "divergencia": null,
+    "deve_citar": [
+      "CAP-03"
+    ],
+    "deve_apontar_divergencia": false,
+    "id_venda": "VD000072",
+    "id_vendedor": "V0040"
+  },
+  {
+    "nome": "C_elegivel_consorcio",
+    "descricao": "Consórcio elegível, sem cancelamento: deve estar na carteira",
+    "pergunta": "A venda VD000001 entrou na carteira do vendedor V0041. Ela deveria ter entrado, segundo as regras vigentes?",
+    "entra_pelo_manual": true,
+    "divergencia": null,
+    "deve_citar": [],
+    "deve_apontar_divergencia": false,
+    "id_venda": "VD000001",
+    "id_vendedor": "V0041"
+  },
+  {
+    "nome": "C_elegivel_capitalizacao",
+    "descricao": "Capitalização elegível, sem cancelamento: deve estar na carteira",
+    "pergunta": "A venda VD000002 entrou na carteira do vendedor V0008. Ela deveria ter entrado, segundo as regras vigentes?",
+    "entra_pelo_manual": true,
+    "divergencia": null,
+    "deve_citar": [],
+    "deve_apontar_divergencia": false,
+    "id_venda": "VD000002",
+    "id_vendedor": "V0008"
+  },
+  {
+    "nome": "C_vendedor_inativo",
+    "descricao": "Venda de vendedor já desligado: excluída (COM-01)",
+    "pergunta": "Por que a venda VD000006 não entrou na carteira do vendedor V0054?",
+    "entra_pelo_manual": false,
+    "divergencia": null,
+    "deve_citar": [
+      "COM-01"
+    ],
+    "deve_apontar_divergencia": false,
+    "id_venda": "VD000006",
+    "id_vendedor": "V0054"
+  },
+  {
+    "nome": "C_digital_sem_vendedor",
+    "descricao": "Venda digital sem vendedor identificado (COM-02)",
+    "pergunta": "Por que a venda VD000047 não gerou produção para nenhum vendedor?",
+    "entra_pelo_manual": false,
+    "divergencia": null,
+    "deve_citar": [
+      "COM-02"
+    ],
+    "deve_apontar_divergencia": false,
+    "id_venda": "VD000047",
+    "id_vendedor": ""
+  },
+  {
+    "nome": "C_sem_primeira_parcela",
+    "descricao": "Consórcio sem pagamento da 1ª parcela (CONS-02)",
+    "pergunta": "Por que a venda VD000051 não entrou na carteira do vendedor V0022?",
+    "entra_pelo_manual": false,
+    "divergencia": null,
+    "deve_citar": [
+      "CONS-02"
+    ],
+    "deve_apontar_divergencia": false,
+    "id_venda": "VD000051",
+    "id_vendedor": "V0022"
+  },
+  {
+    "nome": "C_modalidade_fora",
+    "descricao": "Capitalização de modalidade não elegível (CAP-01)",
+    "pergunta": "Por que a venda VD000021 não entrou na carteira do vendedor V0014?",
+    "entra_pelo_manual": false,
+    "divergencia": null,
+    "deve_citar": [
+      "CAP-01"
+    ],
+    "deve_apontar_divergencia": false,
+    "id_venda": "VD000021",
+    "id_vendedor": "V0014"
+  },
+  {
+    "nome": "C_mensal_sem_mensalidade",
+    "descricao": "Capitalização mensal sem a 1ª mensalidade (CAP-02)",
+    "pergunta": "Por que a venda VD000080 não entrou na carteira do vendedor V0043?",
+    "entra_pelo_manual": false,
+    "divergencia": null,
+    "deve_citar": [
+      "CAP-02"
+    ],
+    "deve_apontar_divergencia": false,
+    "id_venda": "VD000080",
+    "id_vendedor": "V0043"
+  }
+]

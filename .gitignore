@@ -11,3 +11,4 @@ __pycache__/
 !terraform.tfvars.example
 crash.log
 tfplan
+CLAUDE.local.md
