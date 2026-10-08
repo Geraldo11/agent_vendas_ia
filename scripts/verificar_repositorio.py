@@ -26,13 +26,21 @@ ESPERADOS = [
     "scripts/diagnosticar_token.py", "scripts/verificar_env.py", "scripts/listar_modelos.py", "scripts/gerar_casos.py", "scripts/verificar_repositorio.py",
     "tests/test_regras.py", "tests/test_manual_chunks.py", "tests/test_tools.py",
     "tests/test_db_ambiente.py", "tests/test_agente.py", "tests/test_env.py", "tests/test_provedor.py", "tests/test_casos.py",
+    "tests/test_agente_eventos.py", "tests/test_chat_api.py",
+    "chat/__init__.py", "chat/app.py", "chat/erros.py", "chat/seguranca.py",
     "terraform/main.tf", "terraform/variables.tf", "terraform/versions.tf", "terraform/outputs.tf",
 ]
 
 # Trechos que só existem na versão ATUAL de cada arquivo (detectam cópia antiga)
 MARCADORES = {
     "agentes/tools/db.py": ["def extrair_warehouse_id", "def problema_no_host", "def validar_ambiente"],
-    "agentes/agente.py": ["class LimiteDeUsoAtingido", "def _chamar_modelo", "segundos_nas_tools"],
+    "agentes/agente.py": ["class LimiteDeUsoAtingido", "def _chamar_modelo", "segundos_nas_tools",
+                          "class PerguntaCancelada", "ao_evento", "def evento_fim"],
+    "chat/app.py": ["def criar_app", "EVENTOS_TERMINAIS", "def criar_executor_real", '"/api/parar"'],
+    "chat/erros.py": ["TAMANHO_MINIMO_DE_SEGREDO", "def remover_segredos", "def classificar_erro"],
+    "chat/seguranca.py": ["frame-ancestors 'none'", "def hosts_permitidos", "def origens_permitidas"],
+    "requirements.txt": ["fastapi", "uvicorn", "httpx"],
+    "tests/test_chat_api.py": ["test_todo_fluxo_termina_com_exatamente_um_evento_terminal"],
     "agentes/llm.py": ['"groq"', "verificar_env.py", "def explicar_erro_do_provedor", "def listar_modelos"],
     "agentes/ambiente.py": ["def carregar_env", "def analisar_env", "def diagnosticar"],
     "scripts/perguntar.py": ["carregar_env"],
@@ -90,4 +98,4 @@ if problemas:
     sys.exit(1)
 
 print("Repositório conferido: arquivos presentes, nomes corretos, testes com testes e versões atuais.")
-print("Agora rode:  pytest   (esperado: 223 passed, ou 221 passed + 2 skipped sem o databricks-sdk)")
+print("Agora rode:  pytest   (esperado: 301 testes; sem erros. Alguns são pulados se faltar um pacote opcional, ex.: sqlglot)")

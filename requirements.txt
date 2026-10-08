@@ -4,3 +4,6 @@ numpy
 databricks-sdk
 pypdf
 openai
+fastapi
+uvicorn
+httpx
