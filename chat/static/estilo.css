@@ -1,0 +1,340 @@
+/* Chat do agente de vendas. Sem fontes externas (a CSP só permite arquivos do próprio servidor). */
+
+:root {
+  color-scheme: light;
+  --fundo: #f4f5f7;
+  --superficie: #ffffff;
+  --superficie-2: #eef1f5;
+  --texto: #1b1f24;
+  --texto-suave: #4f5864;           /* contraste >= 4,5:1 sobre --fundo e --superficie */
+  --borda: #d5dae1;
+  --destaque: #0b5cad;
+  --destaque-texto: #ffffff;
+  --usuario: #dbe9fb;
+  --ok: #1d6b3a;
+  --erro: #b3261e;
+  --erro-texto: #ffffff;
+  --erro-fundo: #fdecea;
+  --aviso: #7a4b00;
+  --aviso-fundo: #fff4d6;
+  --chip: #e7e0fb;
+  --chip-texto: #3d2a86;
+  --codigo: #eef0f3;
+  --sombra: 0 1px 2px rgb(0 0 0 / 8%);
+  --raio: 12px;
+  --fonte: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fonte-mono: ui-monospace, "Cascadia Code", Consolas, "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --fundo: #14171c;
+    --superficie: #1d2128;
+    --superficie-2: #252a33;
+    --texto: #e6e8eb;
+    --texto-suave: #a9b1bc;
+    --borda: #343a45;
+    --destaque: #7cb7ff;
+    --destaque-texto: #0b1a2c;
+    --usuario: #1f3552;
+    --ok: #7ad19a;
+    --erro: #ff9a8f;
+    --erro-texto: #2a0d0a;
+    --erro-fundo: #3a1f1d;
+    --aviso: #ffd27a;
+    --aviso-fundo: #3a2f12;
+    --chip: #3a3060;
+    --chip-texto: #ddd3ff;
+    --codigo: #2a2f38;
+    --sombra: none;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  height: 100dvh;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 16px/1.5 var(--fonte);
+}
+
+:focus-visible {
+  outline: 3px solid var(--destaque);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ topo e faixa */
+.faixa-demo {
+  padding: 0.4rem 1rem;
+  background: var(--aviso-fundo);
+  color: var(--aviso);
+  font-weight: 700;
+  text-align: center;
+  font-size: 0.9rem;
+  border-bottom: 2px solid var(--aviso);
+}
+
+.topo {
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borda);
+}
+
+.topo-conteudo, .rodape-conteudo, .conversa > * {
+  width: 100%;
+  max-width: 52rem;
+  margin-inline: auto;
+}
+
+.topo-conteudo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.6rem 1rem;
+}
+
+.topo h1 { margin: 0; font-size: 1.15rem; }
+.status { margin: 0; color: var(--texto-suave); font-size: 0.85rem; }
+.status.problema { color: var(--erro); }
+
+/* ------------------------------------------------------------------ conversa */
+.conversa {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vazio h2 { font-size: 1.2rem; margin: 0.5rem 0; }
+.vazio h3 { font-size: 1rem; margin: 1.25rem 0 0.25rem; }
+.vazio p { color: var(--texto-suave); margin: 0.25rem 0 0.75rem; }
+
+.exemplos { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+
+.exemplo {
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--texto);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: var(--sombra);
+}
+.exemplo:hover { border-color: var(--destaque); }
+
+.mensagem {
+  max-width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--raio);
+  overflow-wrap: anywhere;
+  box-shadow: var(--sombra);
+}
+
+.mensagem.usuario {
+  align-self: flex-end;
+  max-width: min(85%, 40rem);
+  margin-inline: auto 0;
+  background: var(--usuario);
+  white-space: pre-wrap;
+}
+
+.mensagem.assistente {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+}
+
+/* ------------------------------------------------------------------ painel "Como cheguei nisso" */
+.etapas {
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: var(--superficie-2);
+}
+
+.etapas > summary {
+  cursor: pointer;
+  padding: 0.45rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.lista-etapas { list-style: none; margin: 0; padding: 0 0.75rem 0.6rem; display: grid; gap: 0.3rem; }
+
+.etapa {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr auto;
+  align-items: start;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+}
+
+.etapa .duracao { color: var(--texto-suave); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.icone { display: inline-block; width: 1.1rem; text-align: center; font-weight: 700; }
+.etapa.andamento .icone::before {
+  content: "";
+  display: inline-block;
+  width: 0.8rem; height: 0.8rem;
+  border: 2px solid var(--destaque);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+.etapa.concluida .icone::before { content: "✓"; color: var(--ok); }
+.etapa.com-erro .icone::before { content: "✕"; color: var(--erro); }
+.etapa.interrompida .icone::before { content: "–"; color: var(--texto-suave); }
+.etapa.espera { color: var(--aviso); }
+.etapa.espera.andamento .icone::before { border-color: var(--aviso); border-right-color: transparent; }
+
+@keyframes girar { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .etapa.andamento .icone::before { animation: none; border-right-color: var(--destaque); }
+}
+
+/* ------------------------------------------------------------------ resposta formatada */
+.corpo > :first-child { margin-top: 0; }
+.corpo > :last-child { margin-bottom: 0; }
+.corpo p, .corpo ul, .corpo ol, .corpo blockquote, .corpo pre { margin: 0.5rem 0; }
+.corpo ul, .corpo ol { padding-left: 1.4rem; }
+.corpo blockquote {
+  padding: 0.25rem 0.75rem;
+  border-left: 4px solid var(--borda);
+  color: var(--texto-suave);
+}
+.corpo code {
+  font-family: var(--fonte-mono);
+  font-size: 0.9em;
+  background: var(--codigo);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+}
+.corpo pre { overflow-x: auto; background: var(--codigo); padding: 0.6rem 0.75rem; border-radius: 8px; }
+.corpo pre code { padding: 0; background: none; }
+
+.tabela-rolavel { overflow-x: auto; margin: 0.5rem 0; }
+.corpo table { border-collapse: collapse; font-size: 0.92rem; }
+.corpo th, .corpo td { border: 1px solid var(--borda); padding: 0.3rem 0.55rem; text-align: left; vertical-align: top; }
+.corpo th { background: var(--superficie-2); }
+
+.chip {
+  display: inline-block;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--chip-texto);
+  font-family: var(--fonte-mono);
+  font-size: 0.85em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.metricas {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--borda);
+  color: var(--texto-suave);
+  font-size: 0.82rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
+}
+
+/* ------------------------------------------------------------------ erros e cancelamento */
+.caixa-erro {
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  background: var(--erro-fundo);
+  color: var(--texto);
+  border-left: 4px solid var(--erro);
+}
+.caixa-erro strong { color: var(--erro); display: block; margin-bottom: 0.15rem; }
+.caixa-erro p { margin: 0; white-space: pre-wrap; }
+.caixa-cancelada { color: var(--texto-suave); font-style: italic; margin: 0; }
+
+.botao-secundario {
+  margin-top: 0.6rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--destaque);
+  background: transparent;
+  color: var(--destaque);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.botao-secundario:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ------------------------------------------------------------------ rodapé e formulário */
+.rodape {
+  background: var(--superficie);
+  border-top: 1px solid var(--borda);
+}
+.rodape-conteudo { padding: 0.5rem 1rem 0.75rem; }
+
+.aviso { margin: 0 0 0.4rem; font-size: 0.82rem; color: var(--texto-suave); }
+
+.formulario { display: grid; gap: 0.4rem; }
+
+.formulario textarea {
+  width: 100%;
+  min-height: 3rem;
+  max-height: 40vh;
+  resize: vertical;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--fundo);
+  color: var(--texto);
+  font: inherit;
+}
+.formulario textarea:disabled { opacity: 0.7; }
+
+.acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.ajuda { color: var(--texto-suave); font-size: 0.8rem; margin-right: auto; }
+.contador { color: var(--texto-suave); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.contador.perto-do-limite { color: var(--aviso); font-weight: 600; }
+
+.botao-enviar {
+  min-width: 6.5rem;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--destaque);
+  color: var(--destaque-texto);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.botao-enviar.parar { background: var(--erro); color: var(--erro-texto); }
+.botao-enviar:disabled { opacity: 0.55; cursor: not-allowed; }
+
+@media (max-width: 480px) {
+  body { font-size: 15px; }
+  .ajuda { display: none; }
+  .mensagem.usuario { max-width: 92%; }
+  .conversa { padding: 0.75rem; }
+}

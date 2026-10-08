@@ -26,8 +26,9 @@ ESPERADOS = [
     "scripts/diagnosticar_token.py", "scripts/verificar_env.py", "scripts/listar_modelos.py", "scripts/gerar_casos.py", "scripts/verificar_repositorio.py",
     "tests/test_regras.py", "tests/test_manual_chunks.py", "tests/test_tools.py",
     "tests/test_db_ambiente.py", "tests/test_agente.py", "tests/test_env.py", "tests/test_provedor.py", "tests/test_casos.py",
-    "tests/test_agente_eventos.py", "tests/test_chat_api.py",
+    "tests/test_agente_eventos.py", "tests/test_chat_api.py", "tests/test_chat_frontend.py",
     "chat/__init__.py", "chat/app.py", "chat/erros.py", "chat/seguranca.py",
+    "chat/static/index.html", "chat/static/estilo.css", "chat/static/app.js",
     "terraform/main.tf", "terraform/variables.tf", "terraform/versions.tf", "terraform/outputs.tf",
 ]
 
@@ -41,6 +42,8 @@ MARCADORES = {
     "chat/seguranca.py": ["frame-ancestors 'none'", "def hosts_permitidos", "def origens_permitidas"],
     "requirements.txt": ["fastapi", "uvicorn", "httpx"],
     "tests/test_chat_api.py": ["test_todo_fluxo_termina_com_exatamente_um_evento_terminal"],
+    "chat/static/app.js": ["function renderizarMarkdown", "/api/parar", "if (!terminou)"],
+    "chat/static/index.html": ["/static/app.js", 'aria-live="polite"', "MODO DEMONSTRAÇÃO"],
     "agentes/llm.py": ['"groq"', "verificar_env.py", "def explicar_erro_do_provedor", "def listar_modelos"],
     "agentes/ambiente.py": ["def carregar_env", "def analisar_env", "def diagnosticar"],
     "scripts/perguntar.py": ["carregar_env"],

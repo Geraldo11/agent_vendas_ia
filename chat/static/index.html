@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assistente de carteira</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/estilo.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div id="faixa-demo" class="faixa-demo" hidden>
+    MODO DEMONSTRAÇÃO: respostas simuladas, sem modelo de linguagem e sem Databricks.
+  </div>
+
+  <header class="topo">
+    <div class="topo-conteudo">
+      <h1>Assistente de carteira</h1>
+      <p id="status" class="status">Conectando ao servidor…</p>
+    </div>
+  </header>
+
+  <main id="conversa" class="conversa" aria-live="polite" aria-relevant="additions">
+    <section id="vazio" class="vazio">
+      <h2>Pergunte por que uma venda não entrou na carteira</h2>
+      <p>Clique em um exemplo e complete os códigos marcados com ____.</p>
+      <ul class="exemplos">
+        <li><button type="button" class="exemplo">Por que a venda VD______ não entrou na carteira?</button></li>
+        <li><button type="button" class="exemplo">Quais vendas do vendedor V____ ficaram fora da carteira, e por quê?</button></li>
+        <li><button type="button" class="exemplo">Qual foi a produção do vendedor V____ no mês 2026-__?</button></li>
+        <li><button type="button" class="exemplo">Quais regras o código aplica às vendas de consórcio?</button></li>
+      </ul>
+
+      <div id="exemplos-demo" class="exemplos-demo" hidden>
+        <h3>Cenários da demonstração</h3>
+        <p>Cada um simula uma situação. Nenhum gasta tokens.</p>
+        <ul class="exemplos">
+          <li><button type="button" class="exemplo">[demo:normal] Por que a venda VD000084 não entrou na carteira?</button></li>
+          <li><button type="button" class="exemplo">[demo:espera] Por que a venda VD000084 não entrou na carteira?</button></li>
+          <li><button type="button" class="exemplo">[demo:lento] Pergunta demorada (use para testar o botão Parar)</button></li>
+          <li><button type="button" class="exemplo">[demo:limite] Limite diário do provedor esgotado</button></li>
+          <li><button type="button" class="exemplo">[demo:configuracao] Chave recusada pelo provedor</button></li>
+          <li><button type="button" class="exemplo">[demo:provedor] Provedor fora do ar</button></li>
+          <li><button type="button" class="exemplo">[demo:interno] Erro interno do servidor</button></li>
+          <li><button type="button" class="exemplo">[demo:xss] Resposta com conteúdo malicioso</button></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <div class="rodape-conteudo">
+      <p class="aviso">Cada pergunta é independente: o assistente não lembra das anteriores.</p>
+      <form id="formulario" class="formulario" novalidate>
+        <label for="pergunta" class="visualmente-oculto">Sua pergunta</label>
+        <textarea id="pergunta" name="pergunta" rows="2" maxlength="1000"
+                  placeholder="Ex.: Por que a venda VD000084 não entrou na carteira?"
+                  aria-describedby="contador ajuda"></textarea>
+        <div class="acoes">
+          <span id="ajuda" class="ajuda">Enter envia · Shift+Enter quebra a linha</span>
+          <span id="contador" class="contador">0/1000</span>
+          <button type="submit" id="enviar" class="botao-enviar">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </footer>
+</body>
+</html>
