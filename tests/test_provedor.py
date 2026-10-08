@@ -134,8 +134,11 @@ def test_cliente_real_expoe_status_e_codigo_do_404(groq_falso):
 def rodar_script(nome, groq_falso, modelo, extra_args=()):
     env = {k: v for k, v in os.environ.items() if not k.startswith(("LLM_", "GROQ_"))}
     env.update(LLM_PROVIDER="groq", LLM_MODEL=modelo, GROQ_API_KEY="gsk_teste", LLM_BASE_URL=groq_falso)
+    # Os dois lados em UTF-8: sem isso, no Windows o pai lê em cp1252 e o filho pode escrever em UTF-8
+    # (se PYTHONIOENCODING vier do ambiente), e "contém" vira "contÃ©m".
+    env["PYTHONIOENCODING"] = "utf-8"
     return subprocess.run([sys.executable, f"scripts/{nome}", *extra_args], cwd=RAIZ, env=env,
-                          capture_output=True, text=True, timeout=60)
+                          capture_output=True, text=True, encoding="utf-8", timeout=60)
 
 
 def test_testar_llm_com_modelo_descontinuado_explica_em_vez_de_traceback(groq_falso):
