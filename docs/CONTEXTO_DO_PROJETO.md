@@ -1,6 +1,6 @@
 # Contexto do projeto: agentes de vendas fora da carteira (Databricks)
 
-> **Atualizado em 07/10/2026.** Documento para dar contexto a um assistente (ou a uma pessoa) sobre
+> **Atualizado em 08/10/2026.** Documento para dar contexto a um assistente (ou a uma pessoa) sobre
 > **onde o projeto está** e **aonde queremos chegar**. Não contém segredos: tokens, chaves e endereços
 > do workspace ficam só no `.env`.
 
@@ -187,6 +187,21 @@ mas duas seguidas encostam no limite (o tratamento do 429 espera); com ~200 mil 
 perguntas por dia. Uma avaliação de 14 casos custa ~90 mil tokens. Limites da sua conta:
 `console.groq.com/settings/limits`.
 
+### Interface de chat (`chat/`)
+
+Chat web **local** (`python scripts/servir_chat.py`, em `http://127.0.0.1:8000`) que mostra em tempo real o que
+o agente faz e depois a resposta formatada, com tempo e tokens. Detalhes, segurança e checklist: `chat/README.md`.
+
+- **Backend FastAPI:** o agente roda numa thread e emite eventos (`ao_evento`) que chegam ao navegador como
+  NDJSON (uma linha JSON por evento). Todo fluxo termina com **exatamente um** `fim`, `erro` ou `cancelado`.
+- **Uma pergunta por vez** (409 para a segunda), **timeout de 180 s**, botão **Parar** (`POST /api/parar`,
+  atendido entre etapas e na hora durante a espera do 429).
+- **Segurança:** só `127.0.0.1`; CSP estrita; `Host` e `Origin` conferidos; erros sem traceback, sem caminhos
+  e sem valores de variáveis `*KEY`, `*TOKEN` e `*SECRET`; resposta montada sem nenhum `innerHTML`.
+  **Sem autenticação:** não exponha na rede.
+- **Modo demonstração** (`--agente-falso`): o agente real com modelo e tools falsos, um cenário por estado
+  (`[demo:espera]`, `[demo:xss]`...). Não lê o `.env` nem gasta tokens.
+
 ### Limitações conhecidas
 
 - **`executar_sql` lê só o primeiro bloco do resultado** da API do warehouse. Para resultados grandes o restante
@@ -211,17 +226,21 @@ agentes-vendas-ia/
 │   ├── llm.py             provedores de modelo (groq, databricks, ollama, compat)
 │   └── tools/             config, db, dados, regras_codigo, manual
 ├── avaliacao/             casos.json (gerado por scripts/gerar_casos.py)
+├── chat/                  interface de chat: app (FastAPI), erros, seguranca, demo, README
+│   └── static/            index.html, estilo.css, app.js (sem framework, sem build)
 ├── docs/                  manual_elegibilidade_v2.3.pdf
 ├── ingestao/              manual_chunks.py (PDF -> chunks)
 ├── notebooks/             01_setup_e_bronze, 02_silver, 03_gold,
 │                          04_gabarito_divergencias, 05_manual_chunks
 ├── regras/                base, comum, consorcio, capitalizacao, registro
 ├── scripts/               gerar_manual, tools_ao_vivo, testar_llm, perguntar, listar_modelos,
-│                          gerar_casos, verificar_env, verificar_repositorio, diagnosticar_token
+│                          gerar_casos, verificar_env, verificar_repositorio, diagnosticar_token,
+│                          servir_chat
 ├── terraform/             catalogo, schemas e volumes (versions, variables, main, outputs)
 ├── tests/                 test_regras, test_manual_chunks, test_tools,
 │                          test_db_ambiente, test_agente, test_env, test_provedor,
-│                          test_casos
+│                          test_casos, test_agente_eventos, test_chat_api,
+│                          test_chat_frontend, test_chat_integracao
 ├── Dockerfile, docker-compose.yml, requirements.txt, pytest.ini
 └── .env.example, .gitignore, README.md, README_regras.md
 ```
@@ -249,18 +268,25 @@ agentes-vendas-ia/
 - `agentes/casos.py` e `scripts/gerar_casos.py` (conjunto de 14 casos de avaliação: 4 divergências e 10 controles).
 - Medição de tempo (modelo, tools e esperas) no agente e no `perguntar.py`.
 - Todo o SQL novo foi validado só na **sintaxe** (parser do dialeto Databricks), não nos resultados.
+- **Interface de chat** (`chat/`): validada com o servidor real (uvicorn) em **modo demonstração**: eventos em
+  tempo real, 409, Parar, `Origin` e `Host`. Renderização conferida no Edge *headless*: payloads de XSS viram
+  texto, Markdown e chips corretos, `app.js` executa sob a CSP. **Ainda não usada com o agente real (Groq +
+  Databricks) nem no Docker.**
 
 ### Testes automatizados
-- **223 testes** (221 passam e 2 são pulados quando o SDK do Databricks não está instalado, como no Windows local).
-  Distribuição: regras 35, chunks 9, tools 33, ambiente/db 37, agente 41, `.env` 20, provedor 15, casos 33.
+- **354 testes** (353 passam e 1 é pulado quando falta o pacote opcional `sqlglot`, em `test_casos.py`).
+  Distribuição: regras 35, chunks 9, tools 33, ambiente/db 37, agente 41, `.env` 20, provedor 15, casos 33,
+  eventos do agente 16, API do chat 62, front-end do chat 31, integração do chat 22.
+- O JavaScript não roda no `pytest` (não há Node): os testes varrem o texto do `app.js` e do `index.html`
+  (sem `innerHTML`, `eval`, `style=`, `on...=`, script inline nem recursos externos).
 - Validados com **mutação** (quebrar o código de propósito e ver o teste falhar). Isso já revelou furos reais nos
   próprios testes e nas minhas recomendações.
 
 ### Ainda não feito
 - **Rodar o agente nos casos D1 a D4** e nos controles, e observar o comportamento.
 - **Avaliação automática** (rodar todos os casos e pontuar), ajuste do prompt conforme o que a avaliação mostrar.
-- Especialistas e orquestrador, auditor automático, busca semântica, Terraform de jobs e permissões, CI, aplicação
-  Docker dos agentes.
+- Especialistas e orquestrador, auditor automático, busca semântica, Terraform de jobs e permissões, CI.
+- Chat: memória entre perguntas, autenticação (necessária antes de qualquer exposição em rede).
 
 ---
 
@@ -338,13 +364,18 @@ agente de regras, sem mexer no resto.
   erro e listam os modelos disponíveis. Quando eu (o assistente) sugerir um modelo, **a recomendação pode estar
   desatualizada**: confirme na lista da sua chave.
 - **Token vazado:** revogar na hora (Settings, Developer, Access tokens) e gerar outro.
+- **Acentos em testes que rodam scripts (`subprocess`):** no Windows, sem `encoding="utf-8"` o pytest lê a saída
+  em cp1252; se `PYTHONIOENCODING` vier do ambiente, o script escreve em UTF-8 e "contém" vira "contÃ©m". O teste
+  passava numa máquina e falhava em outra. Corrigido em `tests/test_provedor.py` (UTF-8 dos dois lados).
+- **`git commit -m` com aspas duplas no PowerShell 5.1:** as aspas da mensagem quebram os argumentos e o git
+  entende pedaços como nomes de arquivo. Use `git commit -F arquivo.txt` ou mensagens sem aspas duplas.
 
 ---
 
 ## 13. Próximos passos imediatos
 
 1. Aplicar o último pacote de atualização e **restaurar o `.env.example`** (está faltando na máquina local). Rodar
-   `python scripts/verificar_repositorio.py` e `pytest` (esperado: 223 passed, ou 221 + 2 skipped sem o SDK).
+   `python scripts/verificar_repositorio.py` e `pytest` (esperado: 354 testes, 353 passed + 1 skipped sem o `sqlglot`).
 2. Rodar `python scripts/gerar_casos.py`: grava `avaliacao/casos.json` com um exemplo real de cada caso e imprime
    o comando de pergunta pronto para cada um.
 3. Perguntar ao agente os casos **D3 (moto)**, **D1**, **D2** e **D4**, e observar:
@@ -363,7 +394,7 @@ agente de regras, sem mexer no resto.
 docker compose run --rm dev
 
 # Testes
-pytest                                  # esperado: 223 passed (ou 221 + 2 skipped sem o SDK)
+pytest                                  # esperado: 354 testes (353 passed + 1 skipped sem o sqlglot)
 
 # Terraform (dentro do container, em terraform/)
 terraform plan -out=tfplan
@@ -379,4 +410,9 @@ databricks fs cp docs/manual_elegibilidade_v2.3.pdf dbfs:/Volumes/vendas_ia/apoi
 python scripts/tools_ao_vivo.py          # 7 tools contra o workspace real
 python scripts/testar_llm.py            # testa o modelo sozinho (3 etapas)
 python scripts/perguntar.py "Por que a venda VD000084 não entrou na carteira?"
+
+# Interface de chat (http://127.0.0.1:8000)
+python scripts/servir_chat.py                  # agente real
+python scripts/servir_chat.py --agente-falso   # demonstração, sem chaves nem tokens
+docker compose up chat                         # no Docker (depois de docker compose build)
 ```

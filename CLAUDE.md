@@ -24,8 +24,8 @@ Se o documento e o código divergirem, **vale o código**; avise-me para eu atua
 ## Ambiente
 
 - Windows, PowerShell, VS Code. Python local 3.13; o container usa Python 3.11.
-- `pytest` roda direto na máquina. Última contagem (07/10/2026): **223 testes** (221 passam e 2 são pulados
-  sem o `databricks-sdk` instalado).
+- `pytest` roda direto na máquina. Última contagem (08/10/2026): **354 testes** (353 passam e 1 é pulado
+  sem o pacote opcional `sqlglot`).
 - **Terraform e Databricks CLI só existem no container:** `docker compose run --rm dev`
   (o Docker Desktop precisa estar ligado). Comandos Linux (`find`, `databricks`, `terraform`) não funcionam
   no PowerShell.
@@ -41,6 +41,9 @@ Se o documento e o código divergirem, **vale o código**; avise-me para eu atua
 - `ingestao/`: divide o PDF do manual em chunks. `docs/`: manual em PDF.
 - `avaliacao/casos.json` (gerado por `scripts/gerar_casos.py`): **conjunto de casos de avaliação** do agente, com o
   resultado esperado segundo o manual. É a "prova": o agente em execução **não** o lê.
+- `chat/`: interface de chat local (FastAPI + `static/` sem framework). O agente emite eventos (`ao_evento`)
+  que viram NDJSON. Regras: só `127.0.0.1`, CSP estrita, **nunca `innerHTML`** no `app.js` (há teste que varre),
+  erros sem segredos. Detalhes em `chat/README.md`.
 - `terraform/`: catálogo, schemas e volumes. `scripts/`: utilitários. `tests/`: pytest.
 
 ## Regras de negócio e manual
@@ -80,6 +83,7 @@ python scripts/listar_modelos.py                 # modelos que a chave do proved
 python scripts/gerar_casos.py                    # acha no banco um exemplo real de cada caso e grava avaliacao/casos.json
 python scripts/testar_llm.py                    # testa só o modelo (3 etapas)
 python scripts/perguntar.py "Por que a venda VD000084 não entrou na carteira?"
+python scripts/servir_chat.py                    # chat em http://127.0.0.1:8000 (--agente-falso: demonstração)
 ```
 
 ## `.env` (só os nomes; nunca os valores)
