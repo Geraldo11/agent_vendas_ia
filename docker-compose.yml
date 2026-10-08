@@ -7,3 +7,18 @@ services:
     env_file: .env
     stdin_open: true
     tty: true
+
+  # Interface de chat (opcional; só sobe quando pedida: docker compose up chat).
+  # Dentro do container o servidor escuta em 0.0.0.0, mas a porta é publicada SÓ em 127.0.0.1:
+  # nenhuma outra máquina da rede alcança o chat (que não tem autenticação).
+  # Agente REAL por padrão; a demonstração (--agente-falso) só se você pedir. Ver chat/README.md.
+  chat:
+    build: .
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    env_file: .env
+    command: python scripts/servir_chat.py --host 0.0.0.0 --aceitar-rede
+    ports:
+      - "127.0.0.1:8000:8000"
+    profiles: ["chat"]
