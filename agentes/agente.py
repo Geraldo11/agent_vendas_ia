@@ -7,15 +7,26 @@ Ciclo (cada volta é um 'passo'):
 
 O modelo nunca executa nada: só pede. Quem executa é este código, que só aceita tools
 registradas e só passa os argumentos que a tool declara.
+
+Eventos (opcional): quem passa `ao_evento` recebe um dicionário a cada etapa, com a chave "evento":
+  modelo_inicio  {chamada}                      antes de cada chamada ao modelo
+  tool_inicio    {indice, tool, argumentos}     antes de executar uma tool
+  tool_fim       {indice, tool, segundos, erro} depois de executá-la
+  espera         {segundos, motivo}             antes de dormir por limite de uso (429)
+  fim            {resposta, metricas}           resultado final
+Quem passa `deve_parar` pode interromper a pergunta entre as etapas (lança PerguntaCancelada).
 """
 from __future__ import annotations
 
 import json
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from .esquemas import esquema_da_tool
+
+log = logging.getLogger(__name__)
 
 PROMPT_DO_SISTEMA = """Você é um assistente de análise de vendas de consórcio e capitalização.
 Sua tarefa é explicar, com base em dados e regras, por que uma venda não entrou na carteira de um \
@@ -38,10 +49,15 @@ Regras:
 
 MAX_CARACTERES_DO_RESULTADO = 8000
 ESPERA_MAXIMA_EM_429 = 90        # acima disso é limite DIÁRIO: esperar não adianta, avisamos o usuário
+MAX_CARACTERES_DOS_ARGUMENTOS_NO_EVENTO = 300   # os argumentos vêm do modelo: limitamos o que vai para a tela
 
 
 class LimiteDeUsoAtingido(RuntimeError):
     """O provedor recusou por excesso de uso (HTTP 429) e esperar não resolve (ou esgotou as tentativas)."""
+
+
+class PerguntaCancelada(RuntimeError):
+    """Quem chamou o agente pediu para parar (deve_parar() devolveu True entre duas etapas)."""
 
 
 @dataclass
@@ -108,9 +124,15 @@ def _espera_sugerida(erro: Exception, tentativa: int):
     return espera + 1 if espera <= ESPERA_MAXIMA_EM_429 else None
 
 
-def _chamar_modelo(cliente: Any, argumentos: Dict[str, Any], dormir: Callable[[float], None], max_tentativas: int):
-    """Chama o modelo; em caso de 429 (limite por minuto) espera o tempo sugerido e tenta de novo."""
+def _chamar_modelo(cliente: Any, argumentos: Dict[str, Any], dormir: Callable[[float], None], max_tentativas: int,
+                   deve_parar: Optional[Callable[[], bool]] = None):
+    """Chama o modelo; em caso de 429 (limite por minuto) espera o tempo sugerido e tenta de novo.
+
+    Antes de cada NOVA tentativa (isto é, depois de dormir) confere `deve_parar`: se pediram para parar
+    durante a espera, desiste sem chamar o provedor de novo."""
     for tentativa in range(max_tentativas):
+        if tentativa > 0 and deve_parar is not None and deve_parar():
+            raise PerguntaCancelada("pergunta cancelada durante a espera por limite de uso")
         try:
             return cliente.chat.completions.create(**argumentos)
         except Exception as erro:  # noqa: BLE001
@@ -126,10 +148,58 @@ def _chamar_modelo(cliente: Any, argumentos: Dict[str, Any], dormir: Callable[[f
             dormir(espera)
 
 
+def _argumentos_para_exibir(argumentos_json: str) -> Any:
+    """Argumentos pedidos pelo modelo, prontos para um evento: dicionário se for um JSON-objeto curto,
+    senão o texto cortado. É texto NÃO confiável: quem exibe deve tratá-lo como texto puro."""
+    texto = argumentos_json or ""
+    if len(texto) <= MAX_CARACTERES_DOS_ARGUMENTOS_NO_EVENTO:
+        try:
+            valor = json.loads(texto or "{}")
+        except json.JSONDecodeError:
+            valor = None
+        if isinstance(valor, dict):
+            return valor
+        return texto
+    return texto[:MAX_CARACTERES_DOS_ARGUMENTOS_NO_EVENTO] + "…"
+
+
+def evento_fim(resultado: ResultadoDoAgente) -> Dict[str, Any]:
+    """O evento 'fim' de um resultado. Fica em função própria para o servidor montar o mesmo evento."""
+    return {
+        "evento": "fim",
+        "resposta": resultado.resposta,
+        "metricas": {
+            "chamadas_ao_modelo": resultado.chamadas_ao_modelo,
+            "tokens_entrada": resultado.tokens_entrada,
+            "tokens_saida": resultado.tokens_saida,
+            "segundos_no_modelo": resultado.segundos_no_modelo,
+            "segundos_nas_tools": resultado.segundos_nas_tools,
+            "segundos_em_espera": resultado.segundos_em_espera,
+            "parou_por_limite": resultado.parou_por_limite,
+        },
+    }
+
+
 def executar_agente(pergunta: str, cliente: Any, modelo: str, tools: Sequence[Callable],
                     *, prompt: str = PROMPT_DO_SISTEMA, max_passos: int = 8,
                     temperatura: float = 0.0, dormir: Callable[[float], None] = time.sleep,
-                    max_tentativas_429: int = 4) -> ResultadoDoAgente:
+                    max_tentativas_429: int = 4,
+                    ao_evento: Optional[Callable[[Dict[str, Any]], None]] = None,
+                    deve_parar: Optional[Callable[[], bool]] = None) -> ResultadoDoAgente:
+    def emitir(evento: Dict[str, Any]) -> None:
+        if ao_evento is None:
+            return
+        try:
+            ao_evento(evento)
+        except Exception as erro:  # noqa: BLE001 - um defeito em quem ouve não pode derrubar a resposta
+            # Só o tipo do evento e da exceção: a mensagem poderia conter dados da pergunta.
+            log.warning("ao_evento falhou no evento %r (%s); o agente continua", evento.get("evento"),
+                        type(erro).__name__)
+
+    def conferir_parada() -> None:
+        if deve_parar is not None and deve_parar():
+            raise PerguntaCancelada("pergunta cancelada")
+
     por_nome = {t.__name__: t for t in tools}
     esquemas = {t.__name__: esquema_da_tool(t) for t in tools}
     lista_de_esquemas = list(esquemas.values())
@@ -144,23 +214,28 @@ def executar_agente(pergunta: str, cliente: Any, modelo: str, tools: Sequence[Ca
 
     def dormir_medindo(segundos: float) -> None:
         nonlocal t_espera
+        emitir({"evento": "espera", "segundos": segundos, "motivo": "limite_de_uso"})
         inicio = time.monotonic()
         dormir(segundos)
         t_espera += time.monotonic() - inicio
 
     def resultado_final(resposta: str, parou: bool = False) -> ResultadoDoAgente:
-        return ResultadoDoAgente(
+        resultado = ResultadoDoAgente(
             resposta=resposta, passos=passos, parou_por_limite=parou, chamadas_ao_modelo=chamadas,
             tokens_entrada=tokens_in, tokens_saida=tokens_out,
             segundos_no_modelo=round(max(0.0, t_modelo - t_espera), 2),
             segundos_nas_tools=round(t_tools, 2), segundos_em_espera=round(t_espera, 2),
         )
+        emitir(evento_fim(resultado))
+        return resultado
 
     for _ in range(max_passos):
+        conferir_parada()
+        emitir({"evento": "modelo_inicio", "chamada": chamadas + 1})
         inicio = time.monotonic()
         resposta = _chamar_modelo(
             cliente, dict(model=modelo, messages=mensagens, tools=lista_de_esquemas, temperature=temperatura),
-            dormir_medindo, max_tentativas_429,
+            dormir_medindo, max_tentativas_429, deve_parar,
         )
         t_modelo += time.monotonic() - inicio
         chamadas += 1
@@ -183,6 +258,10 @@ def executar_agente(pergunta: str, cliente: Any, modelo: str, tools: Sequence[Ca
             ],
         })
         for chamada in pedidas:
+            conferir_parada()
+            indice = len(passos) + 1
+            emitir({"evento": "tool_inicio", "indice": indice, "tool": chamada.function.name,
+                    "argumentos": _argumentos_para_exibir(chamada.function.arguments)})
             inicio = time.monotonic()
             resultado = _executar_tool(chamada.function.name, chamada.function.arguments, por_nome, esquemas)
             duracao = time.monotonic() - inicio
@@ -190,6 +269,8 @@ def executar_agente(pergunta: str, cliente: Any, modelo: str, tools: Sequence[Ca
             passos.append({"tool": chamada.function.name, "argumentos": chamada.function.arguments,
                            "erro": isinstance(resultado, dict) and "erro" in resultado,
                            "segundos": round(duracao, 2)})
+            emitir({"evento": "tool_fim", "indice": indice, "tool": chamada.function.name,
+                    "segundos": passos[-1]["segundos"], "erro": passos[-1]["erro"]})
             mensagens.append({"role": "tool", "tool_call_id": chamada.id, "content": _para_texto(resultado)})
 
     return resultado_final(
