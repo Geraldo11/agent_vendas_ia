@@ -105,4 +105,4 @@ if problemas:
     sys.exit(1)
 
 print("Repositório conferido: arquivos presentes, nomes corretos, testes com testes e versões atuais.")
-print("Agora rode:  pytest   (esperado: 301 testes; sem erros. Alguns são pulados se faltar um pacote opcional, ex.: sqlglot)")
+print("Agora rode:  pytest   (esperado: 354 testes; sem erros. Alguns são pulados se faltar um pacote opcional, ex.: sqlglot)")
