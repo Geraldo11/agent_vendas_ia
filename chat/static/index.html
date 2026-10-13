@@ -15,15 +15,35 @@
 
   <header class="topo">
     <div class="topo-conteudo">
-      <h1>Assistente de carteira</h1>
+      <div class="marca">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" focusable="false">
+            <path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path>
+          </svg>
+        </span>
+        <div>
+          <h1>Assistente de carteira</h1>
+          <p class="subtitulo">Consórcio e capitalização · dados no Databricks · código comparado ao manual</p>
+        </div>
+      </div>
       <p id="status" class="status">Conectando ao servidor…</p>
     </div>
   </header>
 
   <main id="conversa" class="conversa" aria-live="polite" aria-relevant="additions">
     <section id="vazio" class="vazio">
-      <h2>Pergunte por que uma venda não entrou na carteira</h2>
-      <p>Clique em um exemplo e complete os códigos marcados com ____.</p>
+      <div class="hero">
+        <h2>Por que a venda não entrou na carteira?</h2>
+        <p>O assistente investiga como um analista faria, e cita a regra na resposta.</p>
+        <ol class="passos-hero">
+          <li><span class="passo-numero" aria-hidden="true">1</span><span><strong>Dados</strong> Consulta a venda e a decisão do pipeline</span></li>
+          <li><span class="passo-numero" aria-hidden="true">2</span><span><strong>Código</strong> Lê a regra de negócio que excluiu a venda</span></li>
+          <li><span class="passo-numero" aria-hidden="true">3</span><span><strong>Manual</strong> Compara com o manual, a fonte da verdade</span></li>
+        </ol>
+      </div>
+
+      <p class="rotulo-secao">Experimente: clique e complete os códigos marcados com ____</p>
       <ul class="exemplos">
         <li><button type="button" class="exemplo">Por que a venda VD______ não entrou na carteira?</button></li>
         <li><button type="button" class="exemplo">Quais vendas do vendedor V____ ficaram fora da carteira, e por quê?</button></li>
@@ -32,9 +52,8 @@
       </ul>
 
       <div id="exemplos-demo" class="exemplos-demo" hidden>
-        <h3>Cenários da demonstração</h3>
-        <p>Cada um simula uma situação. Nenhum gasta tokens.</p>
-        <ul class="exemplos">
+        <p class="rotulo-secao">Cenários da demonstração (nenhum gasta tokens)</p>
+        <ul class="exemplos compactos">
           <li><button type="button" class="exemplo">[demo:normal] Por que a venda VD000084 não entrou na carteira?</button></li>
           <li><button type="button" class="exemplo">[demo:espera] Por que a venda VD000084 não entrou na carteira?</button></li>
           <li><button type="button" class="exemplo">[demo:lento] Pergunta demorada (use para testar o botão Parar)</button></li>
@@ -50,16 +69,18 @@
 
   <footer class="rodape">
     <div class="rodape-conteudo">
-      <p class="aviso">Cada pergunta é independente: o assistente não lembra das anteriores.</p>
       <form id="formulario" class="formulario" novalidate>
         <label for="pergunta" class="visualmente-oculto">Sua pergunta</label>
-        <textarea id="pergunta" name="pergunta" rows="2" maxlength="1000"
-                  placeholder="Ex.: Por que a venda VD000084 não entrou na carteira?"
-                  aria-describedby="contador ajuda"></textarea>
+        <div class="caixa-entrada">
+          <textarea id="pergunta" name="pergunta" rows="1" maxlength="1000"
+                    placeholder="Pergunte sobre uma venda ou regra…"
+                    aria-describedby="contador ajuda"></textarea>
+          <button type="submit" id="enviar" class="botao-enviar">Enviar</button>
+        </div>
         <div class="acoes">
+          <span class="aviso">Cada pergunta é independente: o assistente não lembra das anteriores.</span>
           <span id="ajuda" class="ajuda">Enter envia · Shift+Enter quebra a linha</span>
           <span id="contador" class="contador">0/1000</span>
-          <button type="submit" id="enviar" class="botao-enviar">Enviar</button>
         </div>
       </form>
     </div>
