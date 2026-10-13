@@ -23,8 +23,8 @@ _VALORES_DE_EXEMPLO = ("seu-workspace", "coloque_", "cole_", "_aqui")
 
 
 def extrair_warehouse_id(valor: str) -> str:
-    """Aceita só o ID ('5743803c731887dd') ou o HTTP path completo
-    ('/sql/1.0/warehouses/5743803c731887dd') e devolve apenas o ID."""
+    """Aceita só o ID ('0123456789abcdef') ou o HTTP path completo
+    ('/sql/1.0/warehouses/0123456789abcdef') e devolve apenas o ID."""
     partes = [p for p in (valor or "").strip().split("/") if p]
     return partes[-1] if partes else ""
 
@@ -67,7 +67,7 @@ def validar_ambiente(nomes=ENV_OBRIGATORIAS, env=None) -> None:
         if not re.fullmatch(r"[0-9a-fA-F]{8,}", extrair_warehouse_id(bruto_wh)):
             problemas.append(
                 f"{ENV_WAREHOUSE} não parece um ID de warehouse (recebido: {bruto_wh!r}); "
-                "use só o final do HTTP path, por exemplo 5743803c731887dd"
+                "use só o final do HTTP path, por exemplo 0123456789abcdef"
             )
     problema = problema_no_host((env.get("DATABRICKS_HOST") or "").strip())
     if problema and not any(p.startswith("DATABRICKS_HOST") for p in problemas):

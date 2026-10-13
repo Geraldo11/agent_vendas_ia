@@ -3,7 +3,7 @@ import pytest
 from agentes.tools.db import ENV_OBRIGATORIAS, validar_ambiente
 
 BOM = {
-    "DATABRICKS_HOST": "https://dbc-dc0cd492-f516.cloud.databricks.com",
+    "DATABRICKS_HOST": "https://dbc-exemplo-1234.cloud.databricks.com",
     "DATABRICKS_TOKEN": "dapi0123456789abcdef",
     "DATABRICKS_WAREHOUSE_ID": "abc123def456",
 }
@@ -38,7 +38,7 @@ def test_variavel_ausente_e_citada_pelo_nome():
 
 
 def test_host_com_parametro_de_workspace_e_recusado():
-    env = {**BOM, "DATABRICKS_HOST": "https://dbc-dc0cd492-f516.cloud.databricks.com/?o=520079234478790"}
+    env = {**BOM, "DATABRICKS_HOST": "https://dbc-exemplo-1234.cloud.databricks.com/?o=1234567890123456"}
     with pytest.raises(RuntimeError, match="sem caminho nem"):
         validar_ambiente(TODAS, env=env)
 
@@ -56,14 +56,14 @@ def test_warehouse_so_e_exigido_quando_pedido():
 
 
 @pytest.mark.parametrize("host", [
-    "https:////dbc-dc0cd492-f516.cloud.databricks.com",         # barras demais (o seu caso)
-    "//dbc-dc0cd492-f516.cloud.databricks.com",                 # faltou o "https:" (o seu caso real)
-    "https:///dbc-dc0cd492-f516.cloud.databricks.com",          # três barras
-    "https://https://dbc-dc0cd492-f516.cloud.databricks.com",   # https duplicado
-    "https//dbc-dc0cd492-f516.cloud.databricks.com",            # faltou o ':'
-    "https:/dbc-dc0cd492-f516.cloud.databricks.com",            # uma barra só
-    "http://dbc-dc0cd492-f516.cloud.databricks.com",            # http em vez de https
-    "dbc-dc0cd492-f516.cloud.databricks.com",                   # sem o https://
+    "https:////dbc-exemplo-1234.cloud.databricks.com",         # barras demais (o seu caso)
+    "//dbc-exemplo-1234.cloud.databricks.com",                 # faltou o "https:" (o seu caso real)
+    "https:///dbc-exemplo-1234.cloud.databricks.com",          # três barras
+    "https://https://dbc-exemplo-1234.cloud.databricks.com",   # https duplicado
+    "https//dbc-exemplo-1234.cloud.databricks.com",            # faltou o ':'
+    "https:/dbc-exemplo-1234.cloud.databricks.com",            # uma barra só
+    "http://dbc-exemplo-1234.cloud.databricks.com",            # http em vez de https
+    "dbc-exemplo-1234.cloud.databricks.com",                   # sem o https://
 ])
 def test_host_malformado_e_recusado(host):
     with pytest.raises(RuntimeError, match="DATABRICKS_HOST"):
@@ -72,12 +72,12 @@ def test_host_malformado_e_recusado(host):
 
 def test_mensagem_mostra_o_host_recebido_para_voce_ver_o_defeito():
     with pytest.raises(RuntimeError) as erro:
-        validar_ambiente(TODAS, env={**BOM, "DATABRICKS_HOST": "https:////dbc-dc0cd492-f516.cloud.databricks.com"})
-    assert "https:////dbc-dc0cd492-f516.cloud.databricks.com" in str(erro.value)
+        validar_ambiente(TODAS, env={**BOM, "DATABRICKS_HOST": "https:////dbc-exemplo-1234.cloud.databricks.com"})
+    assert "https:////dbc-exemplo-1234.cloud.databricks.com" in str(erro.value)
 
 
 def test_barra_final_e_tolerada():
-    validar_ambiente(TODAS, env={**BOM, "DATABRICKS_HOST": "https://dbc-dc0cd492-f516.cloud.databricks.com/"})
+    validar_ambiente(TODAS, env={**BOM, "DATABRICKS_HOST": "https://dbc-exemplo-1234.cloud.databricks.com/"})
 
 
 @pytest.mark.parametrize("token", [
@@ -102,10 +102,10 @@ from agentes.tools.db import extrair_warehouse_id  # noqa: E402
 
 
 @pytest.mark.parametrize("valor, esperado", [
-    ("5743803c731887dd", "5743803c731887dd"),                          # só o ID
-    ("/sql/1.0/warehouses/5743803c731887dd", "5743803c731887dd"),      # o seu caso: caminho completo
-    ("/sql/1.0/warehouses/5743803c731887dd/", "5743803c731887dd"),     # com barra no fim
-    ("  5743803c731887dd  ", "5743803c731887dd"),                      # espaços ao redor
+    ("0123456789abcdef", "0123456789abcdef"),                          # só o ID
+    ("/sql/1.0/warehouses/0123456789abcdef", "0123456789abcdef"),      # o seu caso: caminho completo
+    ("/sql/1.0/warehouses/0123456789abcdef/", "0123456789abcdef"),     # com barra no fim
+    ("  0123456789abcdef  ", "0123456789abcdef"),                      # espaços ao redor
     ("", ""),
 ])
 def test_extrair_warehouse_id(valor, esperado):
@@ -113,7 +113,7 @@ def test_extrair_warehouse_id(valor, esperado):
 
 
 def test_caminho_completo_do_warehouse_e_aceito_na_validacao():
-    validar_ambiente(TODAS, env={**BOM, "DATABRICKS_WAREHOUSE_ID": "/sql/1.0/warehouses/5743803c731887dd"})
+    validar_ambiente(TODAS, env={**BOM, "DATABRICKS_WAREHOUSE_ID": "/sql/1.0/warehouses/0123456789abcdef"})
 
 
 @pytest.mark.parametrize("valor", ["warehouse", "meu-warehouse", "/sql/1.0/warehouses/", "xyz123"])
@@ -151,11 +151,11 @@ def test_executar_sql_envia_so_o_id_do_warehouse(monkeypatch):
     monkeypatch.setattr(db, "obter_cliente", lambda: _cliente_falso(registro))
     for nome, valor in BOM.items():
         monkeypatch.setenv(nome, valor)
-    monkeypatch.setenv("DATABRICKS_WAREHOUSE_ID", "/sql/1.0/warehouses/5743803c731887dd")
+    monkeypatch.setenv("DATABRICKS_WAREHOUSE_ID", "/sql/1.0/warehouses/0123456789abcdef")
 
     resultado = db.executar_sql("SELECT :a AS x", {"a": 1})
 
-    assert registro["warehouse_id"] == "5743803c731887dd"      # o caminho completo NÃO vai para a API
+    assert registro["warehouse_id"] == "0123456789abcdef"      # o caminho completo NÃO vai para a API
     assert registro["parameters"][0].name == "a" and registro["parameters"][0].type == "BIGINT"
     assert resultado == [{"x": 1}]                              # e a resposta volta convertida para int
 

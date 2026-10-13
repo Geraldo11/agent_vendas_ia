@@ -135,7 +135,7 @@ def test_container_pode_escutar_em_todas_as_interfaces_com_a_flag(uvicorn_falso)
 def test_env_incompleto_falha_cedo_com_mensagem_clara_e_sem_segredo(monkeypatch, uvicorn_falso, ausente, trecho):
     monkeypatch.setattr(servir_chat, "carregar_env", lambda: True)   # não lê o .env real
     completo = {"DATABRICKS_HOST": "https://dbc-1.cloud.databricks.com", "DATABRICKS_TOKEN": "dapi_segredo_123456",
-                "DATABRICKS_WAREHOUSE_ID": "5743803c731887dd", "LLM_PROVIDER": "groq", "LLM_MODEL": "m",
+                "DATABRICKS_WAREHOUSE_ID": "0123456789abcdef", "LLM_PROVIDER": "groq", "LLM_MODEL": "m",
                 "GROQ_API_KEY": "gsk_segredo_abcdef"}
     for nome, valor in completo.items():
         monkeypatch.setenv(nome, valor)
